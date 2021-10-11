@@ -1,0 +1,93 @@
+{ parameter (or (list %init string) (string %vote)) ;
+  storage
+    (pair (pair (address %admin) (map %candidates string int)) (map %voters address bool)) ;
+  code { UNPAIR ;
+         IF_LEFT
+           { SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CAR ;
+             SOURCE ;
+             COMPARE ;
+             NEQ ;
+             IF { DROP 2 ; PUSH string "Admin not recognized" ; FAILWITH }
+                { SWAP ;
+                  DUP ;
+                  DUG 2 ;
+                  CAR ;
+                  CDR ;
+                  SWAP ;
+                  ITER { SWAP ;
+                         DROP ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         CAR ;
+                         CDR ;
+                         PUSH int 0 ;
+                         DIG 2 ;
+                         SWAP ;
+                         SOME ;
+                         SWAP ;
+                         UPDATE } ;
+                  EMPTY_MAP address bool ;
+                  SWAP ;
+                  DIG 2 ;
+                  CAR ;
+                  CAR ;
+                  PAIR ;
+                  PAIR ;
+                  NIL operation ;
+                  PAIR } }
+           { PUSH mutez 500000 ;
+             AMOUNT ;
+             COMPARE ;
+             LT ;
+             IF { DROP 2 ; PUSH string "You need a minimum of 0.5tezos to vote" ; FAILWITH }
+                { SOURCE ;
+                  DUP 3 ;
+                  CAR ;
+                  CDR ;
+                  DUP 3 ;
+                  GET ;
+                  IF_NONE { PUSH bool False } { DROP ; PUSH bool True } ;
+                  IF { DUP 3 ;
+                       CDR ;
+                       SWAP ;
+                       DUP ;
+                       DUG 2 ;
+                       GET ;
+                       IF_NONE { PUSH bool False } {} ;
+                       IF { DROP 3 ; PUSH string "Voter has already voted" ; FAILWITH }
+                          { DUP 3 ;
+                            CAR ;
+                            CDR ;
+                            DUP 3 ;
+                            GET ;
+                            IF_NONE { PUSH string "No vote count for this candidate" ; FAILWITH } {} ;
+                            PUSH int 1 ;
+                            ADD ;
+                            DUP 4 ;
+                            CDR ;
+                            PUSH bool True ;
+                            DIG 3 ;
+                            SWAP ;
+                            SOME ;
+                            SWAP ;
+                            UPDATE ;
+                            DUP 4 ;
+                            CAR ;
+                            CDR ;
+                            DIG 2 ;
+                            SOME ;
+                            DIG 3 ;
+                            UPDATE ;
+                            DIG 2 ;
+                            CAR ;
+                            CAR ;
+                            PAIR ;
+                            PAIR ;
+                            NIL operation ;
+                            PAIR } }
+                     { DROP 3 ; PUSH string "Candidate name does not exist" ; FAILWITH } } } } }
