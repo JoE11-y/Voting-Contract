@@ -10,7 +10,7 @@ type entryPoints =
 
 type storage = {
     admin: address ;
-    candidates : (string, int) map ;
+    candidates : candidateMap ;
     voters : (address, bool) map ;
     winner_details : winner_dets ;
 }
@@ -22,8 +22,8 @@ let init_candidates(candidate_names, store : string list * storage) : returnType
     then
         (failwith "Admin not recognized" : returnType)
     else
-       let addToMap (_param, name : candidateMap * string ) : (string, int) map = Map.add name 0 store.candidates in
-       let new_candidates : (string, int) map = List.fold_left addToMap store.candidates candidate_names in
+       let addToMap (candidates_Mapping, name : candidateMap * string ) : candidateMap = Map.add name 0 candidates_Mapping in
+       let new_candidates : candidateMap = List.fold_left addToMap store.candidates candidate_names in
        let store = {store with candidates = new_candidates ; voters = (Map.empty : (address, bool) map) ; } in
     (([] : operation list), store)
 
