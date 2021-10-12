@@ -1,16 +1,18 @@
 type initParameter = string list
 type voteParameter = string
-
+type winner_dets = { winner : string ; votes : int }
 type candidateMap = (string, int) map
 
 type entryPoints = 
 | Init of initParameter
 | Vote of voteParameter
+| FindWinner
 
 type storage = {
     admin: address ;
     candidates : (string, int) map ;
     voters : (address, bool) map ;
+    winner_details : winner_dets ;
 }
 
 type returnType = operation list * storage
@@ -70,9 +72,31 @@ let vote(name, store : voteParameter * storage) : returnType =
             (([] : operation list), store)
         else
             (failwith "Candidate name does not exist" : returnType)
-    
+
+let find_winner (store : storage) : returnType =
+    if Tezos.source <> store.admin
+    then
+        (failwith "Admin not recognized" : returnType)
+    else
+
+        let checkVotes (i, j : winner_dets * (string * int)) : winner_dets =
+            if i.votes > j.1
+            then
+                i
+            else
+                {winner = j.0 ; votes = j.1}
+        in
+
+        let winner_details : winner_dets = 
+            Map.fold checkVotes store.candidates {winner = " " ; votes = 0} 
+        in
+        
+        let store = {store with winner_details = winner_details ; } in
+
+    (([] : operation list), store)
 
 let main (action, store : entryPoints * storage) : returnType =
     match action with 
     | Init param -> init_candidates (param, store)
     | Vote param -> vote (param, store)
+    | FindWinner -> find_winner store
